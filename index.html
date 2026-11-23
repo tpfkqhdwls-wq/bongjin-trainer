@@ -46,7 +46,22 @@ header h1{font-size:30px;font-weight:900;letter-spacing:-.02em;line-height:1.2;m
 header p{color:var(--sub);font-size:15px;margin-top:2px}
 .share{min-height:48px;padding:0 18px;border-radius:14px;background:var(--accent);color:var(--bg);font-weight:700;font-size:15px;white-space:nowrap}
 .share:active{transform:scale(.97)}
-@media(max-width:520px){.share{width:100%}}
+.acts{display:flex;gap:8px}
+.share.ghost{background:var(--card);color:var(--ink);border:1.5px solid var(--line)}
+@media(max-width:520px){.acts{width:100%;display:grid;grid-template-columns:1fr 1fr}.share{width:100%;padding:0 8px;font-size:14.5px}}
+.guide h3{margin-top:4px}
+.guide .lead{color:var(--sub);font-size:14px;margin-top:4px}
+.os{margin-top:16px;border:1.5px solid var(--line);border-radius:16px;padding:16px}
+.os.me{border-color:var(--stb)}
+.os h4{font-size:16px;font-weight:900;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.os h4 .me-chip{font-size:11px;font-weight:700;color:#fff;background:var(--stb);padding:2px 8px;border-radius:99px}
+.os ol{margin:10px 0 0 0;padding:0;list-style:none;display:grid;gap:8px;counter-reset:s}
+.os li{counter-increment:s;display:flex;gap:10px;align-items:flex-start;font-size:15px;line-height:1.5}
+.os li::before{content:counter(s);flex:0 0 24px;height:24px;border-radius:50%;background:var(--bg);border:1px solid var(--line);display:grid;place-items:center;font-size:12px;font-weight:900}
+.os li b{color:var(--ink)}
+.ico{display:inline-grid;place-items:center;min-width:26px;height:26px;padding:0 6px;border-radius:7px;background:var(--bg);border:1px solid var(--line);font-size:14px;vertical-align:middle;margin:0 2px}
+.gnote{margin-top:16px;background:var(--bg);border-radius:14px;padding:14px;font-size:14px;line-height:1.6;color:var(--sub)}
+.installed{margin-top:14px;text-align:center;font-weight:700;color:var(--done)}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--accent);color:var(--bg);padding:13px 20px;border-radius:14px;font-size:14px;font-weight:700;opacity:0;pointer-events:none;transition:.25s;z-index:40;width:max-content;max-width:calc(100% - 32px);text-align:center}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 .site-foot{margin-top:14px;padding-top:18px;border-top:1px solid var(--line);font-size:13px;color:var(--sub);text-align:center;line-height:1.6}
@@ -172,7 +187,10 @@ mark{background:color-mix(in srgb,var(--stb) 25%,transparent);color:inherit;bord
         <h1>김봉진 트레이너</h1>
         <p>일상 움직임 &amp; 기본 운동 가이드</p>
       </div>
-      <button class="share" id="share" type="button">🔗 링크 복사하기</button>
+      <div class="acts">
+        <button class="share ghost" id="appGuide" type="button">📲 어플로 쓰기</button>
+        <button class="share" id="share" type="button">🔗 링크 복사하기</button>
+      </div>
     </div>
     <div class="flow"><span>🫁 호흡·정렬</span><i>→</i><span>🔓 가동성</span><i>→</i><span>🧱 안정화</span><i>→</i><span>💪 강화</span></div>
     <p class="tip">📷 운동을 누르고 <b>내 사진으로 바꾸기</b>를 하면 내 자세 사진으로 볼 수 있어요</p>
@@ -602,6 +620,52 @@ function toast(msg){
   const t = $("#toast"); t.textContent = msg; t.classList.add("show");
   clearTimeout(toastTimer); toastTimer = setTimeout(()=>t.classList.remove("show"), 2600);
 }
+/* 어플로 쓰기(홈 화면 추가) 안내 */
+let installEvt = null;
+window.addEventListener("beforeinstallprompt", e=>{ e.preventDefault(); installEvt = e; });
+const ua = navigator.userAgent;
+const isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
+const isAndroid = /Android/.test(ua);
+const isStandalone = () => (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true;
+function openGuide(){
+  const iosMe = isIOS, andMe = isAndroid;
+  $("#modal").innerHTML = `
+    <div class="guide">
+      <div class="mh"><span class="tag k">홈 화면에 추가</span><button class="x" data-close aria-label="닫기">×</button></div>
+      <h3>📲 어플처럼 쓰기</h3>
+      <p class="lead">한 번만 추가하면 휴대폰 홈 화면에 '김봉진 트레이너' 아이콘이 생겨요.</p>
+      ${isStandalone() ? `<p class="installed">✓ 지금 어플로 보고 있어요!</p>` : ``}
+      <section class="os ${iosMe?'me':''}">
+        <h4>🍎 아이폰 (Safari) ${iosMe?'<span class="me-chip">내 휴대폰</span>':''}</h4>
+        <ol>
+          <li><span>화면 아래 <b>공유 버튼</b> <span class="ico">⬆︎</span> (네모 위 화살표)을 누르기</span></li>
+          <li><span>메뉴를 <b>아래로 스크롤</b>하기</span></li>
+          <li><span><b>'홈 화면에 추가'</b> <span class="ico">＋</span> → 오른쪽 위 <b>'추가'</b> 누르기</span></li>
+        </ol>
+      </section>
+      <section class="os ${andMe?'me':''}">
+        <h4>🤖 갤럭시 (Chrome) ${andMe?'<span class="me-chip">내 휴대폰</span>':''}</h4>
+        <ol>
+          <li><span>오른쪽 위 <b>메뉴</b> <span class="ico">⋮</span> (점 3개)를 누르기</span></li>
+          <li><span><b>'홈 화면에 추가'</b> 또는 <b>'앱 설치'</b> 누르기</span></li>
+          <li><span>안내 창에서 <b>'추가'</b>(또는 '설치') 누르기</span></li>
+        </ol>
+        ${installEvt ? `<button class="mbtn" type="button" data-install>지금 바로 설치하기</button>` : ``}
+      </section>
+      <p class="gnote">홈 화면 아이콘으로 열면 주소창 없이 앱처럼 깔끔하게 볼 수 있고, 내용이 업데이트되어도 새로고침만 하면 바로 반영됩니다.</p>
+    </div>`;
+  $("#modal").onchange = null;
+  $("#modal").onclick = async e=>{
+    if(e.target.closest("[data-close]")) return closeModal();
+    if(e.target.closest("[data-install]") && installEvt){
+      installEvt.prompt();
+      try { const r = await installEvt.userChoice; if(r.outcome==="accepted"){ installEvt = null; closeModal(); toast("설치됐어요! 홈 화면에서 열어 보세요."); } } catch(_){}
+    }
+  };
+  $("#ov").classList.add("open"); document.body.style.overflow="hidden";
+}
+$("#appGuide").onclick = openGuide;
+
 $("#share").onclick = async ()=>{
   const url = location.href.split("#")[0];
   let ok = false;
