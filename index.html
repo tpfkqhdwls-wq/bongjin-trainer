@@ -667,7 +667,9 @@ function openGuide(){
 $("#appGuide").onclick = openGuide;
 
 $("#share").onclick = async ()=>{
-  const url = location.href.split("#")[0];
+  /* 공식 주소에서 열었으면 짧은 주소(is.gd/bongjinpt)를 복사 */
+  const SHORT_URL = "https://is.gd/bongjinpt";
+  const url = /(^|\.)github\.io$/.test(location.hostname) || location.protocol === "file:" ? SHORT_URL : location.href.split("#")[0];
   let ok = false;
   try { await navigator.clipboard.writeText(url); ok = true; }
   catch(e){
