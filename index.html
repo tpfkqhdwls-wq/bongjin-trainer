@@ -64,7 +64,19 @@ html{-webkit-tap-highlight-color:transparent}
 .search button{font-size:22px;color:var(--sub);padding:4px}
 .from{font-size:12px;font-weight:700;color:var(--sub)}
 mark{background:color-mix(in srgb,var(--stb) 25%,transparent);color:inherit;border-radius:3px;padding:0 1px}
-.mpic{margin-top:14px;border-radius:16px;background:#fbf1e3;overflow:hidden;display:flex;justify-content:center}
+.mpic{margin-top:14px;border-radius:16px;background:#fbf1e3;overflow:hidden;display:flex;justify-content:center;position:relative}
+.mine-badge{position:absolute;top:10px;left:10px;background:rgba(20,23,28,.75);color:#fff;font-size:12px;font-weight:700;padding:4px 10px;border-radius:99px}
+.mine{margin-left:auto;margin-right:8px;font-size:12px;font-weight:700;color:var(--stb)}
+.photo-row{display:flex;gap:8px;margin-top:10px}
+.pbtn{flex:1;display:flex;align-items:center;justify-content:center;min-height:52px;border-radius:14px;background:var(--stb);color:#fff;font-weight:900;font-size:16px;cursor:pointer}
+.pbtn:active{transform:scale(.98)}
+.plink{min-height:52px;padding:0 14px;border-radius:14px;border:1.5px solid var(--line);font-weight:700;font-size:14px;color:var(--sub)}
+.pnote{font-size:12px;color:var(--sub);text-align:center;margin-top:6px}
+.vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0)}
+.photo-row{position:relative}
+#pf:focus-visible + .pbtn{outline:2px solid var(--ink);outline-offset:2px}
+.tip{margin-top:12px;font-size:13.5px;color:var(--sub);background:var(--card);border:1px dashed var(--line);border-radius:12px;padding:10px 12px}
+.tip b{color:var(--stb)}
 .mpic img{max-height:min(46vh,420px);width:auto;max-width:100%;display:block}
 .empty{grid-column:1/-1;text-align:center;color:var(--sub);padding:40px 0}
 .yt{display:flex;justify-content:center;align-items:center;gap:8px;margin-top:10px;padding:13px;border-radius:14px;border:1.5px solid var(--line);font-weight:700;font-size:15px;color:var(--ink);text-decoration:none}
@@ -155,6 +167,7 @@ mark{background:color-mix(in srgb,var(--stb) 25%,transparent);color:inherit;bord
       <button class="share" id="share" type="button">🔗 링크 복사하기</button>
     </div>
     <div class="flow"><span>🫁 호흡·정렬</span><i>→</i><span>🔓 가동성</span><i>→</i><span>🧱 안정화</span><i>→</i><span>💪 강화</span></div>
+    <p class="tip">📷 운동을 누르고 <b>내 사진으로 바꾸기</b>를 하면 내 자세 사진으로 볼 수 있어요</p>
   </header>
 
   <div class="search"><span aria-hidden="true">🔍</span><input id="q" type="search" placeholder="운동·근육 검색 (예: 둔근, 데드버그)" autocomplete="off"><button id="qx" aria-label="검색어 지우기" hidden>×</button></div>
@@ -358,7 +371,7 @@ function renderGrid(){
   $("#grid").innerHTML = items.length ? items.map(({c,x,i})=>{
     const k = exKey(c,i), d = !!done[k];
     return `<article class="card ${d?'done':''}" data-c="${c.id}" data-i="${i}">
-      <div class="top"><span class="tag ${x.t}">${TAG[x.t]}</span><span class="${searching?'from':'step'}">${searching? c.e+' '+c.name : 'STEP '+(i+1)}</span></div>
+      <div class="top"><span class="tag ${x.t}">${TAG[x.t]}</span>${myPhoto[k]?'<span class="mine">📷 내 사진</span>':''}<span class="${searching?'from':'step'}">${searching? c.e+' '+c.name : 'STEP '+(i+1)}</span></div>
       <div class="name">${hl(x.n)}<small>${hl(x.en)}</small></div>
       <div class="mus"><div><em>주동근</em><span>${hl(x.pm)}</span></div><div><em>보조근</em><span>${hl(x.sm)}</span></div></div>
       <ul class="cues">${x.cues.map(t=>`<li>${hl(t)}</li>`).join("")}</ul>
@@ -382,11 +395,17 @@ function openModal(cid,i){
   const c = DATA.find(d=>d.id===cid), x = c.ex[i], k = exKey(c,i);
   const yt = "https://www.youtube.com/results?search_query=" + encodeURIComponent(x.en + " " + x.n);
   const draw = () => {
-    const d = !!done[k];
+    const d = !!done[k], mine = myPhoto[k];
     $("#modal").innerHTML = `
     <div class="mh"><span class="tag ${x.t}">${TAG[x.t]}</span><button class="x" data-close aria-label="닫기">×</button></div>
     <h3>${x.n}</h3><div style="color:var(--sub);font-size:13px">${x.en} · ${c.name}</div>
-    ${IMG[k]?`<div class="mpic"><img src="${IMG[k]}" alt="${x.n} 동작 시범"></div>`:''}
+    <div class="mpic">${mine?'<span class="mine-badge">📷 내 사진</span>':''}<img src="${mine||IMG[k]}" alt="${x.n} ${mine?'내 사진':'동작 시범'}"></div>
+    <div class="photo-row">
+      <input class="vh" id="pf" type="file" accept="image/*">
+      <label class="pbtn" for="pf">📷 ${mine?'내 사진 다시 찍기':'내 사진으로 바꾸기'}</label>
+      ${mine?'<button class="plink" type="button" data-reset>기본 그림으로</button>':''}
+    </div>
+    <p class="pnote">사진은 이 휴대폰에만 저장돼요. 다른 사람에게는 보이지 않아요.</p>
     <div class="sec"><h4>쓰이는 근육</h4><div class="mus"><div><em>주동근</em><span>${x.pm}</span></div><div><em>보조근</em><span>${x.sm}</span></div></div></div>
     <div class="sec"><h4>세트 · 템포 가이드</h4><div class="dose"><div><b>세트/횟수</b><span>${x.dose}</span></div><div><b>호흡·템포</b><span>${x.tempo}</span></div></div></div>
     <div class="sec"><h4>티칭 큐</h4><ul class="cues" style="border:0;padding:0">${x.cues.map(q=>`<li>${q}</li>`).join("")}</ul></div>
@@ -401,9 +420,67 @@ function openModal(cid,i){
   $("#modal").onclick = e=>{
     if(e.target.closest("[data-close]")) return closeModal();
     const b = e.target.closest("[data-mk]"); if(b){ toggle(k); draw(); }
+    if(e.target.closest("[data-reset]")){ removePhoto(k).then(()=>{ draw(); toast("기본 그림으로 돌아왔어요"); }); }
+  };
+  $("#modal").onchange = async e=>{
+    if(e.target.id!=="pf") return;
+    const file = e.target.files && e.target.files[0]; if(!file) return;
+    toast("사진을 저장하는 중…");
+    try { await savePhoto(k, file); draw(); toast("내 사진으로 바뀌었어요!"); }
+    catch(err){ toast("사진을 저장하지 못했어요. 다른 사진으로 다시 해 주세요."); }
   };
   $("#ov").classList.add("open"); document.body.style.overflow="hidden";
 }
+/* 내 사진: 이 기기(브라우저)의 IndexedDB에만 저장 — 서버로 보내지 않음 */
+const myPhoto = {};
+const photoDB = (()=>{
+  let p;
+  const open = () => p || (p = new Promise((res,rej)=>{
+    try { const r = indexedDB.open("bongjin-my-photos",1);
+      r.onupgradeneeded = ()=>r.result.createObjectStore("p");
+      r.onsuccess = ()=>res(r.result); r.onerror = ()=>rej(r.error);
+    } catch(e){ rej(e); }
+  }));
+  const run = (mode, fn) => open().then(db=>new Promise((res,rej)=>{
+    const t = db.transaction("p",mode), out = fn(t.objectStore("p"));
+    t.oncomplete = ()=>res(out && out.result); t.onerror = ()=>rej(t.error); t.onabort = ()=>rej(t.error);
+  }));
+  return {
+    all: () => open().then(db=>new Promise((res,rej)=>{
+      const o = {}, t = db.transaction("p"), c = t.objectStore("p").openCursor();
+      c.onsuccess = ()=>{ const cur = c.result; if(cur){ o[cur.key] = cur.value; cur.continue(); } };
+      t.oncomplete = ()=>res(o); t.onerror = ()=>rej(t.error);
+    })),
+    put: (k,v) => run("readwrite", s=>s.put(v,k)),
+    del: k => run("readwrite", s=>s.delete(k))
+  };
+})();
+async function shrinkPhoto(file){
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((res,rej)=>{ const i = new Image(); i.onload = ()=>res(i); i.onerror = rej; i.src = url; });
+    const s = Math.min(1, 1000 / Math.max(img.naturalWidth, img.naturalHeight));
+    const cv = document.createElement("canvas");
+    cv.width = Math.round(img.naturalWidth*s); cv.height = Math.round(img.naturalHeight*s);
+    cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);
+    return await new Promise((res,rej)=>cv.toBlob(b=>b?res(b):rej(new Error("toBlob")),"image/jpeg",0.85));
+  } finally { URL.revokeObjectURL(url); }
+}
+async function savePhoto(k, file){
+  const blob = await shrinkPhoto(file);
+  await photoDB.put(k, blob);
+  if(myPhoto[k]) URL.revokeObjectURL(myPhoto[k]);
+  myPhoto[k] = URL.createObjectURL(blob);
+  try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch(_){}
+  renderGrid();
+}
+async function removePhoto(k){
+  try { await photoDB.del(k); } catch(_){}
+  if(myPhoto[k]) URL.revokeObjectURL(myPhoto[k]);
+  delete myPhoto[k]; renderGrid();
+}
+photoDB.all().then(all=>{ for(const k in all) myPhoto[k] = URL.createObjectURL(all[k]); renderGrid(); }).catch(()=>{});
+
 function closeModal(){ $("#ov").classList.remove("open"); document.body.style.overflow=""; }
 
 $("#cats").onclick = e=>{
